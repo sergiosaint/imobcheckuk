@@ -1,0 +1,67 @@
+.title {
+  margin-top: 10px;
+  text-align: center;
+}
+
+.side-by-side{
+  display: inline-block;
+}
+
+.margin-right{
+  margin-right: 20px;
+}
+
+.roundedBox {
+  float: left;
+  background-color: aliceblue;
+  border-radius: 15px;
+  padding: 20px;
+  margin: 20px;
+}
+
+.settings {
+ width: fit-content;
+}
+
+.smallWidth{
+  width: 200px;
+}
+
+.credit {
+  width: 270px;
+}
+
+.cashFlow {
+  width: 380px;
+}
+
+.rents {
+  width: 200px;
+}
+
+.results {
+  float: left;
+  background-color: aliceblue;
+  border-radius: 15px;
+  padding: 20px;
+  margin: 20px;
+}
+
+.results th {
+  position: sticky;
+  top: 0;
+  background-color: rgb(205, 207, 211) !important;
+}
+
+.results .text {
+  margin-bottom: 20px;
+}
+
+.input-group-text {
+  width: 38px;
+}
+
+.labelSpacing {
+  padding-top: 5px;
+}
+
