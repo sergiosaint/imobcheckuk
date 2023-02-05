@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Form, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import { OverlayTrigger, Tooltip } from 'react-bootstrap';
 import '../MainScreen.css'
 
 function RoundToTwoDecimalPlaces(num : number) : number{
@@ -8,6 +8,23 @@ function RoundToTwoDecimalPlaces(num : number) : number{
 
 function calculateRepaymentValue(debt:number, montlyInterest:number, numberOfPayments:number) : number {
   return (debt / ((1-Math.pow(1+(montlyInterest), -numberOfPayments))/montlyInterest));
+}
+
+function calculateYearInterestPayments(debt:number, yearlyInterest:number, numberOfPayments:number) : {totalRepayment:number, totalInterestPayment: number} {
+  var monthlyInterest = yearlyInterest/100/12
+  var totalRepayment = 0
+  var totalInterestPayment = 0
+  for(let i = 0; i < 12; i++){
+    var bankPayment = calculateRepaymentValue(debt, monthlyInterest, numberOfPayments)
+    var interest = debt*monthlyInterest
+    var repayment = bankPayment - interest
+    totalRepayment += repayment
+    totalInterestPayment += (bankPayment-repayment)
+    debt -= repayment
+    numberOfPayments--
+  }
+
+  return { totalRepayment, totalInterestPayment}
 }
 
 function MainScreen() {
@@ -27,6 +44,8 @@ function MainScreen() {
   const [grossRent, setGrossRent] = React.useState("0");
   const [netRent, setNetRent] = React.useState("0");
   const [rentTax, setRentTax] = React.useState("40");
+  const [taxCashBack, setTaxCashBack] = React.useState<Number>(0);
+  const [firstYearRepayments, setFirstYearRepayments] = React.useState<Number>(0);
   const [anualCashFlow, setAnualCashFlow] = React.useState("0");
   const [monthlyCashFlow, setMonthlyCashFlow] = React.useState("0");
   const [monthlyCashFlowAmort, setMonthlyCashFlowAmort] = React.useState("0");
@@ -100,7 +119,7 @@ function MainScreen() {
 
       setMonthlyCashFlowAmort(RoundToTwoDecimalPlaces(monthlyCashFlowNumber + monthlyBankRepaymentNumber).toString())
     }
-  },[monthlyCosts, monthlyBankPayment, anualCosts, netRent, imiCosts, condominiumCosts])
+  },[monthlyCosts, monthlyBankPayment, anualCosts, netRent, imiCosts, condominiumCosts, monthlyBankRepayment])
 
   useEffect(() => {
     var entryPaymentNumber = Number(entryPayment);
@@ -153,32 +172,50 @@ function MainScreen() {
   },[debt, interest, numberOfPayments])
 
   useEffect(() => {
+    var debtNumber = Number(debt);
+    var interestNumber = Number(interest);
+    var numberOfPaymentsNumber = Number(numberOfPayments);
+    var grossRentNumber  = Number(grossRent);
+
+    if(!Number.isNaN(debtNumber) && debtNumber > 0){
+    const totals = calculateYearInterestPayments(debtNumber, interestNumber, numberOfPaymentsNumber)
+    setFirstYearRepayments(RoundToTwoDecimalPlaces(totals.totalRepayment))
+
+      if(!Number.isNaN(grossRentNumber) && grossRentNumber > 0){
+        setTaxCashBack(RoundToTwoDecimalPlaces(totals.totalInterestPayment*0.2))
+      } else {
+        setTaxCashBack(0);
+      }
+    }
+
+  },[debt, interest, numberOfPayments, grossRent])
+
+  useEffect(() => {
     var grossRentNumber = Number(grossRent);
     var rentTaxNumber = Number(rentTax);
     var imi = Number(imiCosts);
     var condominium = Number(condominiumCosts);
+    var monthlyCostsNumber = Number(monthlyCosts);
+    var anualCostsNumber = Number(anualCosts);
     if(!Number.isNaN(grossRentNumber) && !Number.isNaN(rentTaxNumber)){
       if (Number.isNaN(imi)) { imi = 0 }
       if (Number.isNaN(condominium)) { condominium = 0 }
+      if (Number.isNaN(monthlyCostsNumber)) { monthlyCostsNumber = 0 }
+      if (Number.isNaN(anualCostsNumber)) { anualCostsNumber = 0 }
 
-      debugger
       var taxes = 0
       var netRent = grossRentNumber
       if(rentTaxNumber > 0) {
-        taxes = (((grossRentNumber-condominium)*12)-imi)*(rentTaxNumber/100)
-        
+        taxes = (((grossRentNumber-condominium-monthlyCostsNumber)*12)-anualCostsNumber)*(rentTaxNumber/100)
       }
 
       if (taxes > 0){
         netRent = grossRentNumber-(taxes/12)
       }
-      if(netRent >= 0){
-        setNetRent(RoundToTwoDecimalPlaces(netRent).toString())
-      }else{
-        setNetRent((-RoundToTwoDecimalPlaces(netRent)).toString())
-      }
+
+      setNetRent(RoundToTwoDecimalPlaces(netRent).toString())
     }
-  },[grossRent, rentTax, imiCosts, condominiumCosts])
+  },[grossRent, rentTax, imiCosts, condominiumCosts, anualCosts, monthlyCosts])
 
   const onEntryPaymentChange = (e:any) => {
     const amount = e.target.value;
@@ -299,7 +336,7 @@ function MainScreen() {
                 </div>
 
               <div className="labelSpacing">
-              <label htmlFor='anualCosts labelSpacing'>Anual Costs (Repairs)</label>
+              <label htmlFor='anualCosts labelSpacing'>Anual Costs (Repairs/Ground rent)</label>
               <div className="input-group">
                 <input type='text'
                        className='form-control'
@@ -426,7 +463,17 @@ function MainScreen() {
             </div>
           </form>
         </div>
+        
         <div className='roundedBox cashFlow'>
+        <OverlayTrigger
+          overlay={<Tooltip id="button-tooltip">
+          This value assumes the payment of the monthly expenses plus 1/12 of the yearly ones
+          </Tooltip>}
+            placement="top"
+            delay={{ show: 250, hide: 300 }}
+          >
+
+          <div>
           <label htmlFor='monthlyCashFlow'>Monthly Cash Flow</label>
           <div className="input-group">
             <input type='text'
@@ -437,7 +484,17 @@ function MainScreen() {
             />
             <span className="input-group-text"> £ </span>
           </div>
+          </div>
+          </OverlayTrigger>
 
+          <OverlayTrigger
+          overlay={<Tooltip id="button-tooltip">
+          This value is an aproximation, because it always uses the debt reduced of the first month. In reality the debt reduced per month increases over time (sligthly)
+          </Tooltip>}
+            placement="top"
+            delay={{ show: 250, hide: 300 }}
+          >
+          <div>
           <label htmlFor='monthlyCashFlowAmort'>Monthly Cash Flow + Monthly debt reduced</label>
           <div className="input-group">
             <input type='text'
@@ -448,8 +505,8 @@ function MainScreen() {
             />
             <span className="input-group-text"> £ </span>
           </div>
-
-          
+          </div>
+          </OverlayTrigger>
 
           <label htmlFor='anualCashFlow'>Anual Cash Flow</label>
           <div className="input-group">
@@ -458,6 +515,39 @@ function MainScreen() {
                    name='anualCashFlow'
                    disabled={true}
                    value={anualCashFlow}
+            />
+            <span className="input-group-text"> £ </span>
+          </div>
+
+          <label htmlFor='interestCashBack'>Interest cash back</label>
+          <div className="input-group">
+            <input type='text'
+                   className='form-control'
+                   name='interestCashBack'
+                   disabled={true}
+                   value={taxCashBack.toString()}
+            />
+            <span className="input-group-text"> £ </span>
+          </div>
+
+          <label htmlFor='interestCashBack'>Anual cash flow + cash back</label>
+          <div className="input-group">
+            <input type='text'
+                   className='form-control'
+                   name='interestCashBack'
+                   disabled={true}
+                   value={RoundToTwoDecimalPlaces(Number(anualCashFlow) + Number(taxCashBack)).toString()}
+            />
+            <span className="input-group-text"> £ </span>
+          </div>
+
+          <label htmlFor='interestCashBack'>Anual cash flow + cash back + repayment</label>
+          <div className="input-group">
+            <input type='text'
+                   className='form-control'
+                   name='interestCashBack'
+                   disabled={true}
+                   value={RoundToTwoDecimalPlaces(Number(anualCashFlow) + Number(taxCashBack) + Number(firstYearRepayments)).toString()}
             />
             <span className="input-group-text"> £ </span>
           </div>
