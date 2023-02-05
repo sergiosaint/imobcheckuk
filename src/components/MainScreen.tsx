@@ -134,14 +134,15 @@ function MainScreen() {
   useEffect(() => {
     var anualCashFlowNumber = Number(anualCashFlow);
     var initialCostNumber = Number(initialCost);
+    var taxCashBackNumber = Number(taxCashBack)
 
     if(!Number.isNaN(anualCashFlowNumber) && !Number.isNaN(initialCostNumber)){
-      var roiNumber = RoundToTwoDecimalPlaces(anualCashFlowNumber*100/initialCostNumber)
+      var roiNumber = RoundToTwoDecimalPlaces((anualCashFlowNumber+taxCashBackNumber)*100/initialCostNumber)
       setRoi(roiNumber.toString())
-      var repRoiNumber = RoundToTwoDecimalPlaces((anualCashFlowNumber + RoundToTwoDecimalPlaces(Number(monthlyBankRepayment)*12)) *100/ initialCostNumber)
+      var repRoiNumber = RoundToTwoDecimalPlaces((anualCashFlowNumber + taxCashBackNumber + RoundToTwoDecimalPlaces(Number(firstYearRepayments))) *100/ initialCostNumber)
       setRepRoi(repRoiNumber.toString())
     }
-  },[anualCashFlow, initialCost, monthlyBankRepayment])
+  },[anualCashFlow, initialCost, monthlyBankRepayment, taxCashBack, firstYearRepayments])
 
   
 
