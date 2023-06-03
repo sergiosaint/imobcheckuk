@@ -1,4 +1,4 @@
-[![Netlify Status](https://api.netlify.com/api/v1/badges/aba47e7c-8a77-47ca-b909-2e9ff7b86695/deploy-status)](https://app.netlify.com/sites/housingcost/deploys) live demo in [checkrentabilidade.netlify.app/](https://housingcost.netlify.app/) 
+[![Netlify Status](https://api.netlify.com/api/v1/badges/aba47e7c-8a77-47ca-b909-2e9ff7b86695/deploy-status)](https://app.netlify.com/sites/housingcost/deploys) live demo in [housingcost.netlify.app/](https://housingcost.netlify.app/) 
 
 A react app to help check the cost or rentability of a house/apartment in the UK
 
